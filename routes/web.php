@@ -15,8 +15,8 @@ Route::get('/dashboard', function () {
     return view('dashboard', ['user' => auth()->user()]);
 })->middleware('auth')->name('dashboard');
 
-Route::post('/register', [UserController::class, 'register']);
-Route::post('/logout', [UserController::class, 'logout']);
-Route::post('/login', [UserController::class, 'login']);
-Route::post('/dashboard/update', [UserController::class, 'update'])->middleware('auth')->name('dashboard.update');
-Route::post('/deleteUser', [UserController::class, 'deleteUser'])->name('user.delete');
+Route::post('/apiRegister', [UserController::class, 'apiRegister']);
+Route::post('/apiLogout', [UserController::class, 'apiLogout']);
+Route::post('/apiLogin', [UserController::class, 'apiLogin']);
+Route::post('/apiUpdate', [UserController::class, 'apiUpdate'])->middleware('auth')->name('dashboard.update');
+Route::post('/apiDeleteUser', [UserController::class, 'apiDeleteUser'])->name('user.delete');

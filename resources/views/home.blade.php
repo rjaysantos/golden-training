@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>CRUD sample -raven</title>
 
@@ -63,24 +64,42 @@
 
 <body style="display: flex; flex-direction: column; ">
 
-    @if (Session::has('accountDeleted'))
-        <script>
-            swal("Deleted!", "{{ Session::get('accountDeleted') }}", "success", {
-                button: "OK",
-            });
-        </script>
-    @endif
-
     <div class="form-container">
         <h2>Register</h2>
-        <form action="/register" method="POST">
+        <form id="register-form">
             @csrf
-            <input name="name" type="text" placeholder="Name">
-            <input name="username" type="text" placeholder="Username">
-            <input name="password" type="password" placeholder="Password">
+            <input name="name" type="text" placeholder="Name" required>
+            <input name="username" type="text" placeholder="Username" required>
+            <input name="password" type="password" placeholder="Password" required>
             <button type="submit">Register</button>
         </form>
+        <button onclick="window.location.href = '/login'"> Login </button>
     </div>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+    
+            fetch('/apiRegister', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.user) {
+                    swal("Success!", data.message, "success")
+                    .then(() => window.location.href = '/login');
+                } else {
+                    swal("Error!", data.message || "Registration failed", "error");
+                }
+            })
+            .catch(() => {
+                swal("Error!", "Something went wrong", "error");
+            });
+        });
+    </script>
 
 </body>
 

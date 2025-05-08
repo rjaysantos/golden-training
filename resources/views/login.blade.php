@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>Login</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 
@@ -57,22 +59,41 @@
     </style>
 </head>
 <body>
-    @if (Session::has('user_registered'))
-        <script>
-            swal("Success!", "{{ Session::get('user_registered') }}", "success", {
-                button: "OK",
-            });
-        </script>
-    @endif
 
     <div class="form-container">
         <h2>Login</h2>
-        <form action="/login" method="POST">
+        <form id="login-form">
             @csrf
             <input name="username" type="text" placeholder="Username" required>
             <input name="password" type="password" placeholder="Password" required>
             <button type="submit">Log In</button>
         </form>
+        
     </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('/apiLogin', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.user) {
+                    swal("Success!", data.message, "success")
+                        .then(() => window.location.href = '/dashboard');
+                } else {
+                    swal("Error!", data.message || "Login failed", "error");
+                }
+            })
+            .catch(() => {
+                swal("Error!", "Something went wrong", "error");
+            });
+        });
+    </script>
 </body>
 </html>

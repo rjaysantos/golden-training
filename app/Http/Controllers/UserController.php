@@ -8,56 +8,58 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    public function register(Request $request)
+    public function apiRegister(Request $request)
     {
-        $incomingFields = $request->validate([
-            'name' => ['required', 'max:50'],
-            'username' => ['required', 'min:4', 'max:12', 'unique:users'],
-            'password' => ['required']
+        $fields = $request->validate([
+            'name' => 'required',
+            'username' => 'required|unique:users',
+            'password' => 'required',
         ]);
 
-        $incomingFields['password'] = bcrypt($incomingFields['password']);
-        User::create($incomingFields);
+        $fields['password'] = bcrypt($fields['password']);
+        $user = User::create($fields);
 
-        return redirect('/login')->with('user_registered', 'Register Successful.');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'User registered successfully',
+                'user' => $user
+            ], 201);
+        }
+
+        // Redirect to login page
+        return redirect()->route('login')->with('success', 'User registered successfully');
     }
 
-    public function logout(Request $request)
+
+    public function apiLogout(Request $request)
     {
         Auth::logout();
-        $request->session()->invalidate();
-
-        return redirect('/login');
+        return response()->json(['message' => 'Logged out']);
     }
 
-    public function login(Request $request)
+    public function apiLogin(Request $request)
     {
         $credentials = $request->validate([
-            'username' => ['required'],
-            'password' => ['required']
+            'username' => 'required',
+            'password' => 'required'
         ]);
 
         if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect('/dashboard')->with('user_loggedin', 'Login Success.');
-        } else {
-            return redirect('/login');
+            $user = Auth::user();
+            return response()->json(['message' => 'Login successful', 'user' => $user]);
         }
 
-
-        return back()->withErrors([
-            'username' => 'Invalid username or password.',
-        ]);
+        return response()->json(['message' => 'Invalid credentials'], 401); //401 indicates unauthorized
     }
 
-    public function update(Request $request)
+    public function apiUpdate(Request $request)
     {
         $user = auth()->user();
 
         $validated = $request->validate([
-            'name' => ['required', 'max:50'],
-            'username' => ['required', 'min:4', 'max:12', 'unique:users,username,' . $user->id],
-            'password' => ['nullable', 'min:6']
+            'name' => 'required',
+            'username' => 'required|unique:users,username,' . $user->id,
+            'password' => 'nullable',
         ]);
 
         $user->name = $validated['name'];
@@ -67,24 +69,23 @@ class UserController extends Controller
             $user->password = bcrypt($validated['password']);
         }
 
-        /** @var \App\Models\User $user **/
         $user->save();
 
-        return back()->with('updateSuccess', 'Information updated!');
+        return response()->json(['message' => 'Information updated!', 'user' => $user]);
     }
 
-    public function deleteUser(Request $request)
+
+    public function apiDeleteUser(Request $request)
     {
         $user = auth()->user();
-        auth()->logout();
+        
+        if ($user) {
+            $user->delete();
+            Auth::logout();
 
-        /** @var \App\Models\User $user **/
-        // Delete the user
-        $user->delete();
+            return response()->json(['message' => 'Your account has been deleted.']);
+        }
 
-        $request->session()->invalidate();
-
-        // Redirect to register
-        return redirect('/')->with('accountDeleted', 'Your account has been deleted.');
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
 }

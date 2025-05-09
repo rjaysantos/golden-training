@@ -33,6 +33,11 @@
             margin-bottom: 10px;
             margin-top: 4px;
             border-radius: 10px;
+            border: 1px solid #ccc;
+        }
+
+        input:read-only {
+            background-color: #f5f5f5;
         }
 
         button {
@@ -62,21 +67,28 @@
 
         <form id="update-form">
             @csrf
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="_method" value="PATCH">
+
             <label>Name</label>
             <input type="text" name="name" value="{{ $user->name }}" readonly>
+            <div class="error-message" style="color: red; font-size: 12px;"></div>
 
             <label>Username</label>
             <input type="text" name="username" value="{{ $user->username }}" readonly>
+            <div class="error-message" style="color: red; font-size: 12px;"></div>
 
             <label>Password</label>
             <input type="password" name="password" placeholder="Leave blank to keep current" readonly>
+            <div class="error-message" style="color: red; font-size: 12px;"></div>
 
-            <button type="button" onclick="enableEdit()">Edit</button>
-            <button type="submit" id="saveBtn" disabled>Save</button>
+            <button type="button" id="editBtn">Edit</button>
+            <button type="submit" id="saveBtn" style="display: none;">Save</button>
         </form>
         <form id="delete-form">
             @csrf
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="_method" value="DELETE">
             <button type="submit">Delete Account</button>
         </form>
 
@@ -88,10 +100,17 @@
     </div>
 
     <script>
-        function enableEdit() {
-            document.querySelectorAll('#update-form input').forEach(input => input.removeAttribute('readonly'));
-            document.getElementById('saveBtn').disabled = false;
-        }
+        document.getElementById('editBtn').addEventListener('click', function() {
+            const inputs = document.querySelectorAll(
+                '#update-form input[type="text"], #update-form input[type="password"]');
+
+            inputs.forEach(input => {
+                input.removeAttribute('readonly');
+            });
+
+            document.getElementById('saveBtn').style.display = 'inline-block';
+            document.getElementById('editBtn').style.display = 'none';
+        });
 
         document.getElementById('update-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -100,21 +119,38 @@
             const formData = new FormData(this);
 
             fetch('/apiUpdate', {
-                    method: 'POST',
+                    method: 'post',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
                     body: formData
                 })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(err => Promise.reject(err));
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     if (data.user) {
                         swal("Success!", data.message, "success");
-                        document.getElementById('saveBtn').disabled = true;
+                        const inputs = document.querySelectorAll(
+                            '#update-form input[type="text"], #update-form input[type="password"]');
+                        inputs.forEach(input => {
+                            input.setAttribute('readonly', true);
+                        });
                         document.querySelector('h2').textContent = `Welcome! ${data.user.name}`;
+
+                        document.getElementById('editBtn').style.display = 'inline-block';
+                        document.getElementById('saveBtn').style.display = 'none';
                     } else {
-                        swal("Error!", "Update failed", "error");
+                        swal("Error!", data.message || "Update failed", "error");
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    swal("Error!", error.message || "Update failed", "error");
                 });
         });
 
@@ -123,7 +159,7 @@
             if (!confirm("Are you sure you want to delete your account?")) return;
 
             fetch('/apiDeleteUser', {
-                    method: 'POST',
+                    method: 'DELETE',
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content

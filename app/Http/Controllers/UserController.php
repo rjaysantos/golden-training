@@ -26,8 +26,7 @@ class UserController extends Controller
             ], 201);
         }
 
-        // Redirect to login page
-        return redirect()->route('login')->with('success', 'User registered successfully');
+        return response()->json(['message' => 'User registered successfully'], 201); // 201 Created
     }
 
 
@@ -65,13 +64,19 @@ class UserController extends Controller
         $user->name = $validated['name'];
         $user->username = $validated['username'];
 
-        if (!empty($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
+        if (!empty($request->password)) {
+            $user->password = bcrypt($request->password);
         }
 
         $user->save();
 
-        return response()->json(['message' => 'Information updated!', 'user' => $user]);
+        return response()->json(['message' => 'Information updated successfully!', 
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+            ]
+        ]);
     }
 
 

@@ -19,16 +19,11 @@ class UserController extends Controller
         $fields['password'] = bcrypt($fields['password']);
         $user = User::create($fields);
 
-        if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'User registered successfully',
+                'message' => 'User registered successfully 1234',
                 'user' => $user
             ], 201);
-        }
-
-        return response()->json(['message' => 'User registered successfully'], 201); // 201 Created
     }
-
 
     public function apiLogout(Request $request)
     {
@@ -43,12 +38,12 @@ class UserController extends Controller
             'password' => 'required'
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            return response()->json(['message' => 'Login successful', 'user' => $user]);
+        if (Auth::attempt($credentials) == false) {
+            return response()->json(['message' => 'Invalid credentials'], 401); //401 indicates unauthorized
         }
 
-        return response()->json(['message' => 'Invalid credentials'], 401); //401 indicates unauthorized
+        $user = Auth::user();
+            return response()->json(['message' => 'Login successful', 'user' => $user]);
     }
 
     public function apiUpdate(Request $request)
@@ -64,10 +59,8 @@ class UserController extends Controller
         $user->name = $validated['name'];
         $user->username = $validated['username'];
 
-        if (!empty($request->password)) {
+        if (!empty($request->password)) 
             $user->password = bcrypt($request->password);
-        }
-
         $user->save();
 
         return response()->json(['message' => 'Information updated successfully!', 
@@ -84,13 +77,14 @@ class UserController extends Controller
     {
         $user = auth()->user();
         
-        if ($user) {
-            $user->delete();
+        if ($user == false) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $user->delete();
             Auth::logout();
 
             return response()->json(['message' => 'Your account has been deleted.']);
-        }
-
-        return response()->json(['message' => 'Unauthorized'], 401);
+        
     }
 }

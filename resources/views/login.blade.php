@@ -1,99 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 
     <title>Login</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f9f9f9;
-            font-family: Arial, sans-serif;
-            background-color: #27548A;
-        }
-
-        .form-container {
-            border: 2px solid;
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        input {
-            display: block;
-            width: 100%;
-            margin: 5px 0;
-            margin-bottom: 10px;
-            padding: 4px;
-            font-size: 16px;
-            border-radius: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #333;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-            border-radius: 4px;
-        }
-
-        button:hover {
-            background-color: #27548A;
-        }
-
-        h2 {
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
-<body>
 
-    <div class="form-container">
-        <h2>Login</h2>
+<body class="flex justify-center items-center h-screen m-0 font-sans bg-[#27548A]">
+
+    <div class="border-2 p-8 bg-white rounded-xl text-center w-full max-w-sm">
+        <h2 class="mb-5 text-4xl font-bold">LOGIN</h2>
         <form id="login-form">
             @csrf
-            <input name="username" type="text" placeholder="Username" required>
-            <input name="password" type="password" placeholder="Password" required>
-            <button type="submit">Log In</button>
+            <input name="username" type="text" placeholder="Username" required
+                class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100" />
+            <input name="password" type="password" placeholder="Password" required
+                class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100" />
+            <button type="submit"
+                class="px-5 py-2 w-[100px] text-base bg-gray-800 text-white rounded-xl hover:bg-[#27548A] mt-2 cursor-pointer">
+                Log In
+            </button>
         </form>
-        
     </div>
 
     <script>
-        document.getElementById('login-form').addEventListener('submit', function (e) {
+        document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
 
             fetch('/apiLogin', {
-                method: 'POST',
-                headers: { 'Accept': 'application/json' },
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.user) {
-                    swal("Success!", data.message, "success")
-                        .then(() => window.location.href = '/dashboard');
-                } else {
-                    swal("Error!", data.message || "Login failed", "error");
-                }
-            })
-            .catch(() => {
-                swal("Error!", "Something went wrong", "error");
-            });
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.user) {
+                        swal("Success!", data.message, "success")
+                            .then(() => window.location.href = '/dashboard');
+                    } else {
+                        swal("Error!", data.message || "Login failed", "error");
+                    }
+                })
+                .catch(() => {
+                    swal("Error!", "Something went wrong", "error");
+                });
         });
     </script>
 </body>
+
 </html>

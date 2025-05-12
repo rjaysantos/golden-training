@@ -20,10 +20,10 @@ class UserController extends Controller
         $user = User::create($fields);
 
             return response()->json([
-                'message' => 'User registered successfully 1234',
+                'message' => 'User Registered Successfully',
                 'user' => $user
             ], 201);
-    }
+    } 
 
     public function apiLogout(Request $request)
     {

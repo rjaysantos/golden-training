@@ -5,97 +5,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <title>Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #27548A;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            background: white;
-            padding: 35px;
-            border-radius: 10px;
-            width: 500px;
-            box-shadow: 0 0 10px
-        }
-
-        input {
-            width: 95%;
-            padding: 8px;
-            margin-bottom: 10px;
-            margin-top: 4px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-        }
-
-        input:read-only {
-            background-color: #f5f5f5;
-        }
-
-        button {
-            padding: 10px;
-            margin-top: 10px;
-            border: none;
-            background: #333;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        button:hover {
-            background-color: #27548A;
-        }
-
-        .success {
-            color: green;
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 
-<body>
-    <div class="container">
-        <h2>Welcome! {{ $user->name }}</h2>
+<body class="font-sans bg-[#27548A] flex justify-center items-center h-screen">
+    <div class="container bg-white p-[35px] rounded-[10px] w-[500px] shadow-md">
+        <h2 class="text-2xl">Welcome! {{ $user->name }}</h2>
 
-        <form id="update-form">
+        <form id="update-form" class="mt-4">
             @csrf
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
             <input type="hidden" name="_method" value="PATCH">
 
-            <label>Name</label>
-            <input type="text" name="name" value="{{ $user->name }}" readonly>
-            <div class="error-message" style="color: red; font-size: 12px;"></div>
+            <label class="block">Name</label>
+            <input type="text" name="name" value="{{ $user->name }}" readonly
+                class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100">
+            <div class="error-message text-red-500 text-xs"></div>
 
-            <label>Username</label>
-            <input type="text" name="username" value="{{ $user->username }}" readonly>
-            <div class="error-message" style="color: red; font-size: 12px;"></div>
+            <label class="block">Username</label>
+            <input type="text" name="username" value="{{ $user->username }}" readonly
+                class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100">
+            <div class="error-message text-red-500 text-xs"></div>
 
-            <label>Password</label>
-            <input type="password" name="password" placeholder="Leave blank to keep current" readonly>
-            <div class="error-message" style="color: red; font-size: 12px;"></div>
+            <label class="block">Password</label>
+            <input type="password" name="password" placeholder="Leave blank to keep current" readonly
+                class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100">
+            <div class="error-message text-red-500 text-xs"></div>
 
-            <button type="button" id="editBtn">Edit</button>
-            <button type="submit" id="saveBtn" style="display: none;">Save</button>
+            <button type="button" id="editBtn"
+                class="py-2.5 px-4 mt-2.5 border-none bg-gray-800 text-white cursor-pointer rounded-[5px] hover:bg-[#27548A]">Edit</button>
+            <button type="submit" id="saveBtn"
+                class="hidden py-2.5 px-4 mt-2.5 border-none bg-gray-800 text-white cursor-pointer rounded-[5px] hover:bg-[#27548A]">Save</button>
         </form>
-        <form id="delete-form">
+        <form id="delete-form" class="mt-4">
             @csrf
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
             <input type="hidden" name="_method" value="DELETE">
-            <button type="submit">Delete Account</button>
+            <button type="submit"
+                class="py-2.5 px-4 mt-2.5 border-none bg-gray-800 text-white cursor-pointer rounded-[5px] hover:bg-[#27548A]">Delete
+                Account</button>
         </form>
 
-        <form id="logout-form" style="margin-top: 15px;">
+        <form id="logout-form" class="mt-4">
             @csrf
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
-            <button type="submit">Logout</button>
+            <button type="submit"
+                class="py-2.5 px-4 mt-2.5 border-none bg-gray-800 text-white cursor-pointer rounded-[5px] hover:bg-[#27548A]">Logout</button>
         </form>
     </div>
 

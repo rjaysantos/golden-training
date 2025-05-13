@@ -13,9 +13,15 @@ class UserController extends Controller
     {
         $fields = $request->validate([
             'name' => 'required',
-            'username' => 'required|unique:users',
+            'username' => 'required',
             'password' => 'required',
         ]);
+
+        if (User::where('username', $fields['username'])->exists()) {
+            return response()->json([
+                'message' => 'Username already taken'
+            ], 409); //conflict status code 
+        }
 
         $fields['password'] = bcrypt($fields['password']);
         $user = User::create($fields);
@@ -24,12 +30,6 @@ class UserController extends Controller
                 'message' => 'User Registered Successfully',
                 'user' => $user
             ], 201);
-    } 
-
-    public function apiLogout(Request $request)
-    {
-        Auth::logout();
-        return response()->json(['message' => 'Logged out']);
     }
 
     public function apiLogin(Request $request)
@@ -64,7 +64,7 @@ class UserController extends Controller
 
         if (!empty($request->password)) 
             $user->password = bcrypt($request->password);
-        $user->save();
+            $user->save();
 
         return response()->json(['message' => 'Information updated successfully!', 
             'user' => [
@@ -78,15 +78,20 @@ class UserController extends Controller
     public function apiDeleteUser(Request $request)
     {
         $user = auth()->user();
-        
-        if ($user == false) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+
+        if ($user) {
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Your account has been deleted successfully.',
+            ]);
         }
+    }
 
-        $user->delete();
-            Auth::logout();
-
-            return response()->json(['message' => 'Your account has been deleted.']);
-        
+    public function apiLogout(Request $request)
+    {
+        $request->session()->invalidate();
+        return response()->json(['message' => 'Logged out']);
     }
 }

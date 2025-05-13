@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -38,12 +39,14 @@ class UserController extends Controller
             'password' => 'required'
         ]);
 
-        if (Auth::attempt($credentials) == false) {
-            return response()->json(['message' => 'Invalid credentials'], 401); //401 indicates unauthorized
+        $user = User::where('username', $credentials['username'])->first();
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        $user = Auth::user();
-            return response()->json(['message' => 'Login successful', 'user' => $user]);
+        auth()->login($user);
+        return response()->json(['message' => 'Login successful', 'user' => $user]);
     }
 
     public function apiUpdate(Request $request)
@@ -71,7 +74,6 @@ class UserController extends Controller
             ]
         ]);
     }
-
 
     public function apiDeleteUser(Request $request)
     {

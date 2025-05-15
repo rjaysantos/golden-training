@@ -6,63 +6,50 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
-class UserRepository
+class UserRepository //Repository is only for DB queries
 {
-    public function getUserByUsername(string $username): ?User
+    public function getUserByUsername(string $username): ?object
     {
-        return User::where('username', $username)->first();
+        return User::where('username', $username)
+            ->first();
     }
 
-    public function validatedCredentials(string $username, string $password): bool
+    public function getUserByUsernamePassword(string $username, string $password): ?object
     {
-        $user = User::where('username', $username)->first();
-        
-        // Check if user exists and password matches
-        return $user && Hash::check($password, $user->password);
+        return User::where('username', $username)
+            ->where('password', md5($password))
+            ->first();
     }
 
-    public function loginUser($user)
+    public function getUserByName(string $name): ?object
     {
-        Auth::login($user);
+        return User::where('name', $username);
     }
 
-    public function deleteCurrentUser()
+    public function getUserById(int $id): ?User
     {
-        $user = Auth::user();
-        
-        if (!$user) {
-            return false;
+        return User::find($id);
+    }
+    
+    public function createUser(string $name, string $username, string $password): ?object
+    {
+        return User::create([
+            'name' => $name,
+            'username' => $username,
+            'password' => md5($password)
+        ]);
+    }
+
+    public function updateUser(User $user, array $data)
+    {
+        if (isset($data['password'])) {
+            $data['password'] = md5($data['password']);
         }
-        
-        $deleted = $user->delete();
-
-        // Logout and invalidate session
-        if ($deleted) 
-        {
-            Auth::logout();
-            request()->session()->invalidate();
-        }
-        return $deleted;
+        return $user->update($data);
     }
 
-    public function updateUser(array $data): ?User
+    public function deleteUser(User $user)
     {
-        $user = Auth::user();
-        
-        $user->name = $data['name'];
-        $user->username = $data['username'];
-        
-        if (isset($data['password']) && $data['password']) {
-            $user->password = bcrypt($data['password']);
-        }
-        
-        return $user->save() ? $user : null;
-    }
-
-    public function logout(Request $request)
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        return response()->json(null, 204);
+        return $user->delete();
     }
 }

@@ -27,13 +27,16 @@ class UserController extends Controller
             ], 409); //conflict status code 
         }
 
-        $fields['password'] = bcrypt($fields['password']);
-        $user = User::create($fields);
+        $user = $this->repository->createUser($request->name, $request->username, $request->password);
 
-            return response()->json([
-                'message' => 'User Registered Successfully',
-                'user' => $user
-            ], 201);
+        return response()->json([
+            'message' => 'User Registered Successfully',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+            ]
+        ], 201);
     }
 
     public function apiLogin(Request $request)
@@ -42,58 +45,96 @@ class UserController extends Controller
             'username' => 'required',
             'password' => 'required'
         ]);
+        
+        $user = $this->repository->getUserByUsernamePassword($request->username, $request->password);
 
-        $user = $this->repository->getUserByUsername($credentials['username']);
-
-        if (!$user || !$this->repository->validatedCredentials($credentials['username'], $credentials['password']))
-        {
+        if (is_null($user) === true) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        $this->repository->loginUser($user);
-
-        return response()->json(['message' => 'Login successful', 'user' => $user]);
+        return response()->json(
+            [
+                'message' => 'Login successful', 
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                ],
+            ]);
     }
 
+    //  Need adjustment on apiUpdate: hasErrors->updateNotWorking->notAuthenticated & CSRF token mismatch
     public function apiUpdate(Request $request)
     {
         $validated = $request->validate([
+            'id' => 'required',
             'name' => 'required',
             'username' => 'required',
             'password' => 'nullable',
         ]);
-        
-        $updatedUser = $this->repository->updateUser($validated);
-        
-        if (!$updatedUser) {
-            return response()->json(['message' => 'Update failed'], 500);
+
+        $user = $this->repository->getUserById($validated['id']); 
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
-        
+
+        $updateData = [
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $updateData['password'] = md5($validated['password']); 
+        }
+
+        $this->repository->updateUser($user, $updateData);
+
         return response()->json([
-            'message' => 'Profile updated',
+            'success' => true,
+            'message' => 'Information updated successfully!',
             'user' => [
-                'id' => $updatedUser->id,
-                'name' => $updatedUser->name,
-                'username' => $updatedUser->username
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
             ]
         ]);
     }
 
     public function apiDeleteUser(Request $request)
     {
-        $result = $this->repository->deleteCurrentUser();
-        
-        if ($result === false) {
-            return response()->json(['message' => 'User not found'], 404);
+         $request->validate([
+            'username' => 'required',
+            'client_username' => 'required',
+        ]);
+
+        $username = $request->input('username');
+        $clientUsername = $request->input('client_username');
+
+        if ($username !== $clientUsername) {
+            return response()->json(['message' => 'Unauthorized: username mismatch'], 401);
         }
-        
-        return response()->json(['message' => 'Account deleted successfully']);
+
+        $user = $this->repository->getUserByUsername($username);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found.',
+            ], 404);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile deleted successfully.',
+        ]);
     }
 
     public function apiLogout(Request $request)
     {
-        $request->session()->invalidate();
-        return response()->json(['message' => 'Logged out']);
+        return response()->json(['message' => 'Logged out successfully']);
     }
 
 }

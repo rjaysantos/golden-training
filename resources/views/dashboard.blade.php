@@ -14,20 +14,21 @@
 
 <body class="font-sans bg-[#27548A] flex justify-center items-center h-screen">
     <div class="container bg-white p-[35px] rounded-[10px] w-[500px] shadow-md">
-        <h2 class="text-2xl">Welcome! {{ $user->name }}</h2>
+        {{-- userDisplayName still no scripts --}}
+        {{-- also must display the current value of user's name and username  --}}
+        <h2 class="text-2xl">Welcome! <span id="userDisplayName"></span></h2>
 
         <form id="update-form" class="mt-4">
             @csrf
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="_method" value="PATCH">
 
             <label class="block">Name</label>
-            <input type="text" name="name" value="{{ $user->name }}" readonly
+            <input type="text" name="name" id="form-name" readonly
                 class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100">
             <div class="error-message text-red-500 text-xs"></div>
 
             <label class="block">Username</label>
-            <input type="text" name="username" value="{{ $user->username }}" readonly
+            <input type="text" name="username" id="form-username" readonly
                 class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100">
             <div class="error-message text-red-500 text-xs"></div>
 
@@ -59,90 +60,104 @@
     </div>
 
     <script>
-        document.getElementById('editBtn').addEventListener('click', function() {
-            const inputs = document.querySelectorAll(
-                '#update-form input[type="text"], #update-form input[type="password"]');
+        document.addEventListener('DOMContentLoaded', () => {
+            const editBtn = document.getElementById('editBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const inputs = document.querySelectorAll('input[readonly]');
 
-            inputs.forEach(input => {
-                input.removeAttribute('readonly');
+            editBtn.addEventListener('click', function() {
+                inputs.forEach(input => {
+                    input.removeAttribute('readonly');
+                    input.classList.remove('bg-gray-100');
+                    input.classList.add('bg-white');
+                });
+
+                saveBtn.classList.remove('hidden');
+                editBtn.classList.add('hidden');
             });
-
-            document.getElementById('saveBtn').style.display = 'inline-block';
-            document.getElementById('editBtn').style.display = 'none';
         });
+
+        // Need adjustment on update, not working
 
         document.getElementById('update-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            if (!confirm("Are you sure you want to save changes?")) return;
 
             const formData = new FormData(this);
+            const id = localStorage.getItem('id');
 
-            fetch('/apiUpdate', {
-                    method: 'post',
+            fetch('/apiUpdate?id=' + id, {
+                    method: 'PATCH',
+                    body: formData,
                     headers: {
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: formData
-                })
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(err => Promise.reject(err));
                     }
-                    return res.json();
                 })
+                .then(res => res.json())
                 .then(data => {
-                    if (data.user) {
+                    if (data.success) {
                         swal("Success!", data.message, "success");
-                        const inputs = document.querySelectorAll(
-                            '#update-form input[type="text"], #update-form input[type="password"]');
-                        inputs.forEach(input => {
-                            input.setAttribute('readonly', true);
-                        });
-                        document.querySelector('h2').textContent = `Welcome! ${data.user.name}`;
-
-                        document.getElementById('editBtn').style.display = 'inline-block';
-                        document.getElementById('saveBtn').style.display = 'none';
                     } else {
                         swal("Error!", data.message || "Update failed", "error");
                     }
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    swal("Error!", error.message || "Update failed", "error");
+                .catch(() => {
+                    swal("Error!", "Something went wrong", "error");
                 });
         });
+
 
         document.getElementById('delete-form').addEventListener('submit', function(e) {
             e.preventDefault();
             if (!confirm("Are you sure you want to delete your account?")) return;
 
+            const username = localStorage.getItem('username');
+
             fetch('/apiDeleteUser', {
                     method: 'DELETE',
                     headers: {
                         'Accept': 'application/json',
+                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
+                    body: JSON.stringify({
+                        username: username,
+                        client_username: username
+                    }),
                 })
                 .then(res => res.json())
                 .then(data => {
                     swal("Deleted!", data.message, "success")
-                        .then(() => window.location.href = '/');
+                        .then(() => {
+                            localStorage.clear();
+                            window.location.href = '/';
+                        });
+                })
+                .catch(() => {
+                    swal("Error!", "Something went wrong while deleting your account.", "error");
                 });
         });
 
+
         document.getElementById('logout-form').addEventListener('submit', function(e) {
             e.preventDefault();
+
+            localStorage.removeItem('username');
+            localStorage.removeItem('name');
+
             fetch('/apiLogout', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
+                    }
                 })
                 .then(res => res.json())
                 .then(data => {
                     swal("Logged out", data.message, "success")
+                        .then(() => window.location.href = '/login');
+                })
+                .catch(() => {
+                    swal("Logged out", "Session cleared", "info")
                         .then(() => window.location.href = '/login');
                 });
         });

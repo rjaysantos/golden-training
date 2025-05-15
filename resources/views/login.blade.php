@@ -38,17 +38,21 @@
             fetch('/apiLogin', {
                     method: 'POST',
                     headers: {
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
                     },
                     body: formData
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.user) {
-                        swal("Success!", data.message, "success")
+                .then(async res => {
+                    const data = await res.json();
+
+                    if (res.ok && data.user) {
+                        localStorage.setItem('username', data.user.username);
+                        localStorage.setItem('name', data.user.name);
+
+                        swal("Success!", data.message || "Login successful", "success")
                             .then(() => window.location.href = '/dashboard');
                     } else {
-                        swal("Error!", data.message || "Login failed", "error");
+                        swal("Error!", data.message || "Invalid credentials", "error");
                     }
                 })
                 .catch(() => {
@@ -56,6 +60,7 @@
                 });
         });
     </script>
+
 </body>
 
 </html>

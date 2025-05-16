@@ -63,40 +63,40 @@ class UserController extends Controller
             ]);
     }
 
-    //  Need adjustment on apiUpdate: hasErrors->updateNotWorking->notAuthenticated & CSRF token mismatch
     public function apiUpdate(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required',
-            'name' => 'required',
             'username' => 'required',
+            'name' => 'required',
             'password' => 'nullable',
         ]);
 
-        $user = $this->repository->getUserById($validated['id']); 
-
+        $user = $this->repository->getUserByUsername($validated['username']);
+        
         if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
         }
 
-        $updateData = [
+        $updateUserData = [
             'name' => $validated['name'],
-            'username' => $validated['username'],
         ];
 
         if (!empty($validated['password'])) {
-            $updateData['password'] = md5($validated['password']); 
+            $updateUserData['password'] = md5($validated['password']);
         }
 
-        $this->repository->updateUser($user, $updateData);
+        $updated = $this->repository->updateUser($user, $updateUserData);
+
+        if (!$updated) {
+            return response()->json(['success' => false, 'message' => 'Update failed'], 500);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Information updated successfully!',
             'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
+                'name' => $updateUserData['name'],
+                'username' => $validated['username'],
             ]
         ]);
     }
@@ -105,15 +105,9 @@ class UserController extends Controller
     {
          $request->validate([
             'username' => 'required',
-            'client_username' => 'required',
         ]);
 
         $username = $request->input('username');
-        $clientUsername = $request->input('client_username');
-
-        if ($username !== $clientUsername) {
-            return response()->json(['message' => 'Unauthorized: username mismatch'], 401);
-        }
 
         $user = $this->repository->getUserByUsername($username);
 
@@ -124,7 +118,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->delete();
+        $this->repository->deleteUser($user);
 
         return response()->json([
             'success' => true,

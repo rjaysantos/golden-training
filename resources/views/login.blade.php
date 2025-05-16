@@ -19,6 +19,7 @@
         <h2 class="mb-5 text-4xl font-bold">LOGIN</h2>
         <form id="login-form">
             @csrf
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
             <input name="username" type="text" placeholder="Username" required
                 class="w-[95%] py-2 px-2 mb-2.5 mt-1 rounded-[10px] border border-gray-300 bg-gray-100" />
             <input name="password" type="password" placeholder="Password" required
@@ -39,6 +40,7 @@
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     },
                     body: formData
                 })

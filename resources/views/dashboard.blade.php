@@ -14,8 +14,6 @@
 
 <body class="font-sans bg-[#27548A] flex justify-center items-center h-screen">
     <div class="container bg-white p-[35px] rounded-[10px] w-[500px] shadow-md">
-        {{-- userDisplayName still no scripts --}}
-        {{-- also must display the current value of user's name and username  --}}
         <h2 class="text-2xl">Welcome! <span id="userDisplayName"></span></h2>
 
         <form id="update-form" class="mt-4">
@@ -61,6 +59,15 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const currentUser = localStorage.getItem('name');
+            const currentUsername = localStorage.getItem('username');
+
+            document.getElementById('userDisplayName').textContent = currentUser;
+            document.getElementById('form-name').value = currentUser;
+            document.getElementById('form-username').value = currentUsername;
+        })
+
+        document.addEventListener('DOMContentLoaded', () => {
             const editBtn = document.getElementById('editBtn');
             const saveBtn = document.getElementById('saveBtn');
             const inputs = document.querySelectorAll('input[readonly]');
@@ -77,20 +84,29 @@
             });
         });
 
-        // Need adjustment on update, not working
-
         document.getElementById('update-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const formData = new FormData(this);
-            const id = localStorage.getItem('id');
+            const name = localStorage.getItem('name');
+            const username = localStorage.getItem('username');
 
-            fetch('/apiUpdate?id=' + id, {
+            if (!username) {
+                swal("Error!", "Username not found in local storage", "error");
+                return;
+            }
+
+            formData.append('name', name);
+            formData.append('username', username);
+
+            fetch('/apiUpdate', {
                     method: 'PATCH',
                     body: formData,
                     headers: {
                         'Accept': 'application/json',
-                    }
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    credentials: 'same-origin'
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -100,11 +116,7 @@
                         swal("Error!", data.message || "Update failed", "error");
                     }
                 })
-                .catch(() => {
-                    swal("Error!", "Something went wrong", "error");
-                });
         });
-
 
         document.getElementById('delete-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -121,28 +133,24 @@
                     },
                     body: JSON.stringify({
                         username: username,
-                        client_username: username
                     }),
                 })
                 .then(res => res.json())
                 .then(data => {
-                    swal("Deleted!", data.message, "success")
-                        .then(() => {
-                            localStorage.clear();
-                            window.location.href = '/';
-                        });
+                    if (data.success) {
+                        swal("Deleted!", data.message, "success")
+                            .then(() => {
+                                localStorage.clear();
+                                window.location.href = '/';
+                            });
+                    }
                 })
-                .catch(() => {
-                    swal("Error!", "Something went wrong while deleting your account.", "error");
-                });
         });
-
 
         document.getElementById('logout-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            localStorage.removeItem('username');
-            localStorage.removeItem('name');
+            localStorage.clear();
 
             fetch('/apiLogout', {
                     method: 'POST',
@@ -156,10 +164,6 @@
                     swal("Logged out", data.message, "success")
                         .then(() => window.location.href = '/login');
                 })
-                .catch(() => {
-                    swal("Logged out", "Session cleared", "info")
-                        .then(() => window.location.href = '/login');
-                });
         });
     </script>
 </body>

@@ -23,7 +23,7 @@ class UserRepository //Repository is only for DB queries
 
     public function getUserByName(string $name): ?object
     {
-        return User::where('name', $username);
+        return User::where('name', $name);
     }
 
     public function getUserById(int $id): ?User
@@ -36,16 +36,13 @@ class UserRepository //Repository is only for DB queries
         return User::create([
             'name' => $name,
             'username' => $username,
-            'password' => md5($password)
+            'password' => md5($password),
         ]);
     }
 
-    public function updateUser(User $user, array $data)
+    public function updateUser(User $user, User $id, array $data): bool
     {
-        if (isset($data['password'])) {
-            $data['password'] = md5($data['password']);
-        }
-        return $user->update($data);
+        return User::where('id', $id)->update($user);
     }
 
     public function deleteUser(User $user)

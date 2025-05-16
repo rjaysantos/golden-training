@@ -48,19 +48,23 @@ class UserController extends Controller
         
         $user = $this->repository->getUserByUsernamePassword($request->username, $request->password);
 
-        if (is_null($user) === true) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
-        }
-
-        return response()->json(
-            [
-                'message' => 'Login successful', 
+        if ($user) {
+            $request->session()->put('authenticated', true);
+            $request->session()->put('username', $user->username);
+        
+            return response()->json([
+                'success' => true,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'username' => $user->username,
-                ],
+                    'username' => $user->username
+                ]
             ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid credentials'
+        ], 401);
     }
 
     public function apiUpdate(Request $request)

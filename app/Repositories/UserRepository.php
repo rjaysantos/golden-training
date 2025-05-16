@@ -40,9 +40,9 @@ class UserRepository //Repository is only for DB queries
         ]);
     }
 
-    public function updateUser(User $user, User $id, array $data): bool
+    public function updateUser(User $user, array $data): bool
     {
-        return User::where('id', $id)->update($user);
+        return $user->update($data);
     }
 
     public function deleteUser(User $user)

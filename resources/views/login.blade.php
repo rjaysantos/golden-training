@@ -47,14 +47,14 @@
                 .then(async res => {
                     const data = await res.json();
 
-                    if (res.ok && data.user) {
+                    if (!res.ok && !data.user) {
+                        swal("Error!", data.message || "Invalid credentials", "error");
+                    } else {
                         localStorage.setItem('username', data.user.username);
                         localStorage.setItem('name', data.user.name);
 
                         swal("Success!", data.message || "Login successful", "success")
                             .then(() => window.location.href = '/dashboard');
-                    } else {
-                        swal("Error!", data.message || "Invalid credentials", "error");
                     }
                 })
                 .catch(() => {

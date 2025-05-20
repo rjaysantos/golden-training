@@ -2,9 +2,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserRepository //Repository is only for DB queries
 {
@@ -48,11 +46,37 @@ class UserRepository //Repository is only for DB queries
 
     public function updateUser(User $user, array $data): bool
     {
-        return $user->update($data);
+        return DB::table('users')
+            ->where('id', $user->id)
+            ->update($data) > 0;
     }
 
-    public function deleteUser(User $user)
+    public function deleteUser(User $user): bool
     {
-        return $user->delete();
+        return DB::table('users')
+            ->where('id', $user->id)
+            ->delete() > 0;
+    }
+
+    public function saveUserData(User $user): bool
+    {
+        if ($user->id) {
+            return DB::table('users')
+                ->where('id', $user->id)
+                ->update($user->getAttributes()) > 0;
+        }
+    }
+
+    public function clearApiToken(User $user): bool
+    {
+        return DB::table('users')
+            ->where('id', $user->id)
+            ->update(['api_token' => null]) > 0;
+    }
+
+    public function refreshUserById(int $id): ?User
+    {
+        $data = DB::table('users')->where('id', $id)->first();
+        return $data ? new User((array) $data) : null;
     }
 }

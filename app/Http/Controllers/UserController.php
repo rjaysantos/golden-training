@@ -93,39 +93,41 @@ class UserController extends Controller
         $api_token = $request->bearerToken();
         $user = $this->repository->authenticateToken($api_token);
 
-        $request->validate([
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $validatedData = $request->validate([
             'name' => 'sometimes',
             'username' => 'sometimes',
             'password' => 'nullable',
         ]);
 
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
+        if (isset($validatedData['username'])) {
+            $existingUser = $this->repository->getUserByUsername($validatedData['username']);
 
-        $validateData = $request->validate([
-            'name' => 'sometimes',
-            'username' => 'sometimes|unique:users,username,' . $user->id,
-            'password' => 'nullable',
-        ]);
+            if ($existingUser && $existingUser->id !== $user->id) {
+                return response()->json(['error' => 'Username already taken.'], 422);
+            }
+        }
 
         $updateData = [];
 
         if ($request->has('name')) {
-            $updateData['name'] = $validateData['name'];
+            $updateData['name'] = $validatedData['name'];
         }
 
         if ($request->has('username')) {
-            $updateData['username'] = $validateData['username'];
+            $updateData['username'] = $validatedData['username'];
         }
 
         if ($request->filled('password')) {
-            $updateData['password'] = md5($validateData['password']);
+            $updateData['password'] = md5($validatedData['password']);
         }
 
         if (!empty($updateData)) {
             $this->repository->updateUser($user, $updateData);
-            $user->refresh();
+            $this->repository->refreshUserById($user->id); //use direct db refresh method
         }
 
         return response()->json([
@@ -169,8 +171,8 @@ class UserController extends Controller
         $user = $this->repository->authenticateToken($api_token);
 
         if ($user) {
-            $user->api_token = null;
-            $user->save();
+            $this->repository->clearApiToken($user);
+            $this->repository->saveUserData($user);
         }
 
         return response()->json(['message' => 'You have been logged out.']);

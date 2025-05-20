@@ -40,6 +40,12 @@ class UserRepository //Repository is only for DB queries
         ]);
     }
 
+    public function authenticateToken (string $api_token) 
+    {
+        return User::where('api_token', $api_token)
+            ->first();
+    }
+
     public function updateUser(User $user, array $data): bool
     {
         return $user->update($data);

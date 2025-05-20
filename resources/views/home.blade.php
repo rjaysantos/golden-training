@@ -41,11 +41,12 @@
             e.preventDefault();
             const formData = new FormData(this);
 
-            fetch('/apiRegister', {
+            fetch('/api/apiRegister', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content')
                     },
                     body: formData
                 })

@@ -15,8 +15,4 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 });
 
-Route::post('/apiRegister', [UserController::class, 'apiRegister']);
-Route::post('/apiLogin', [UserController::class, 'apiLogin']);
-Route::post('/apiLogout', [UserController::class, 'apiLogout']);
-Route::patch('/apiUpdate', [UserController::class, 'apiUpdate']);
-Route::delete('/apiDeleteUser', [UserController::class, 'apiDeleteUser'])->name('user.delete');
+Route::get('/apiGetAuthenticatedUser', [UserController::class, 'apiGetAuthenticatedUser']);

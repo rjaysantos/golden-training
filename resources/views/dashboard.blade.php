@@ -59,15 +59,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const currentUser = localStorage.getItem('name');
-            const currentUsername = localStorage.getItem('username');
-
-            document.getElementById('userDisplayName').textContent = currentUser;
-            document.getElementById('form-name').value = currentUser;
-            document.getElementById('form-username').value = currentUsername;
-        })
-
-        document.addEventListener('DOMContentLoaded', () => {
             const editBtn = document.getElementById('editBtn');
             const saveBtn = document.getElementById('saveBtn');
             const inputs = document.querySelectorAll('input[readonly]');
@@ -84,38 +75,110 @@
             });
         });
 
-        document.getElementById('update-form').addEventListener('submit', function(e) {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', () => {
+            const api_token = localStorage.getItem('api_token');
+            const currentUser = localStorage.getItem('name');
+            const currentUsername = localStorage.getItem('username');
 
-            const formData = new FormData(this);
-            const name = localStorage.getItem('name');
-            const username = localStorage.getItem('username');
-
-            if (!username) {
-                swal("Error!", "Username not found in local storage", "error");
+            if (!api_token) {
+                window.location.href = '/login';
                 return;
             }
 
-            formData.append('name', name);
-            formData.append('username', username);
+            document.getElementById('userDisplayName').textContent = currentUser || '';
+            document.getElementById('form-name').value = currentUser || '';
+            document.getElementById('form-username').value = currentUsername || '';
 
-            fetch('/apiUpdate', {
-                    method: 'PATCH',
-                    body: formData,
+            fetch('/apiGetAuthenticatedUser', {
+                    method: 'GET',
                     headers: {
+                        'Authorization': 'Bearer ' + api_token,
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    credentials: 'same-origin'
+                    }
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        swal("Success!", data.message, "success");
-                    } else {
-                        swal("Error!", data.message || "Update failed", "error");
+                    if (data.username) {
+                        document.getElementById('userDisplayName').textContent = data.name || '';
+                        document.getElementById('form-name').value = data.name || '';
+                        document.getElementById('form-username').value = data.username || '';
+
+                        localStorage.setItem('name', data.name || '');
+                        localStorage.setItem('username', data.username || '');
                     }
                 })
+                .catch(() => {
+                    localStorage.clear();
+                    swal("Error!", "Failed to fetch user data.", "error")
+                        .then(() => {
+                            window.location.href = '/login';
+                        });
+                });
+        });
+
+        document.getElementById('update-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const api_token = localStorage.getItem('api_token');
+            const formData = new FormData(this);
+            const saveBtn = document.getElementById('saveBtn');
+            const editBtn = document.getElementById('editBtn');
+
+            saveBtn.classList.remove('hidden');
+            editBtn.classList.add('hidden');
+
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+
+            fetch('/api/apiUpdate', {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': 'Bearer ' + api_token,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.user) {
+                        const name = document.getElementById('form-name').value;
+                        const username = document.getElementById('form-username').value;
+                        localStorage.setItem('name', name);
+                        localStorage.setItem('username', username);
+                        document.getElementById('userDisplayName').textContent = name;
+
+                        const passwordField = document.getElementById('form-password');
+                        if (passwordField) {
+                            passwordField.value = '';
+                        }
+
+                        const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+                        for (let i = 0; i < inputs.length; i++) {
+                            inputs[i].readOnly = true;
+                            inputs[i].classList.add('bg-gray-100');
+                        }
+
+                        saveBtn.classList.add('hidden');
+                        editBtn.classList.remove('hidden');
+
+                        swal("Success!", data.message, "success");
+                    } else {
+                        swal("Error!", data.message || "Something went wrong. Please try again.", "error");
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save Changes';
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    swal("Error!", "Failed to update user data.", "error");
+                    saveBtn.disabled = hidden;
+                    saveBtn.textContent = 'Save Changes';
+                });
         });
 
         document.getElementById('delete-form').addEventListener('submit', function(e) {
@@ -124,7 +187,7 @@
 
             const username = localStorage.getItem('username');
 
-            fetch('/apiDeleteUser', {
+            fetch('/api/apiDeleteUser', {
                     method: 'DELETE',
                     headers: {
                         'Accept': 'application/json',
@@ -150,20 +213,29 @@
         document.getElementById('logout-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            localStorage.clear();
+            const api_token = localStorage.getItem('api_token');
 
-            fetch('/apiLogout', {
+            fetch('/api/apiLogout', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + api_token,
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 })
                 .then(res => res.json())
                 .then(data => {
+                    localStorage.clear();
+
                     swal("Logged out", data.message, "success")
-                        .then(() => window.location.href = '/login');
+                        .then(() => {
+                            window.location.replace('/login');
+                        });
                 })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    swal("Error", "Failed to log out.", "error");
+                });
         });
     </script>
 </body>

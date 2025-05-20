@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -45,15 +45,19 @@ class UserController extends Controller
             'username' => 'required',
             'password' => 'required'
         ]);
-        
+
         $user = $this->repository->getUserByUsernamePassword($request->username, $request->password);
 
         if ($user) {
-            $request->session()->put('authenticated', true);
-            $request->session()->put('username', $user->username);
-        
+            $api_token = Str::random(64);
+
+            $user->api_token = $api_token;
+            $user->save();
+
             return response()->json([
                 'success' => true,
+                'message' => 'Login successful',
+                'api_token' => $api_token,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -61,46 +65,75 @@ class UserController extends Controller
                 ]
             ]);
         }
+
         return response()->json([
             'success' => false,
             'message' => 'Invalid credentials'
         ], 401);
     }
 
+    public function apiGetAuthenticatedUser(Request $request) 
+    {
+        $api_token = $request->bearerToken();
+        $user = $this->repository->authenticateToken($api_token);
+
+        if(!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        return response()->json ([
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+        ]);
+    }
+
     public function apiUpdate(Request $request)
     {
-        $validated = $request->validate([
-            'username' => 'required',
-            'name' => 'required',
+        $api_token = $request->bearerToken();
+        $user = $this->repository->authenticateToken($api_token);
+
+        $request->validate([
+            'name' => 'sometimes',
+            'username' => 'sometimes',
             'password' => 'nullable',
         ]);
 
-        $user = $this->repository->getUserByUsername($validated['username']);
-        
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $updateUserData = [
-            'name' => $validated['name'],
-        ];
+        $validateData = $request->validate([
+            'name' => 'sometimes',
+            'username' => 'sometimes|unique:users,username,' . $user->id,
+            'password' => 'nullable',
+        ]);
 
-        if (!empty($validated['password'])) {
-            $updateUserData['password'] = md5($validated['password']);
+        $updateData = [];
+
+        if ($request->has('name')) {
+            $updateData['name'] = $validateData['name'];
         }
 
-        $updated = $this->repository->updateUser($user, $updateUserData);
+        if ($request->has('username')) {
+            $updateData['username'] = $validateData['username'];
+        }
 
-        if (!$updated) {
-            return response()->json(['success' => false, 'message' => 'Update failed'], 500);
+        if ($request->filled('password')) {
+            $updateData['password'] = md5($validateData['password']);
+        }
+
+        if (!empty($updateData)) {
+            $this->repository->updateUser($user, $updateData);
+            $user->refresh();
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Information updated successfully!',
+            'message' => 'User updated successfully',
             'user' => [
-                'name' => $updateUserData['name'],
-                'username' => $validated['username'],
+                'name' => $user->name,
+                'username' => $user->username,
             ]
         ]);
     }
@@ -132,7 +165,15 @@ class UserController extends Controller
 
     public function apiLogout(Request $request)
     {
-        return response()->json(['message' => 'Logged out successfully']);
+        $api_token = $request->bearerToken();
+        $user = $this->repository->authenticateToken($api_token);
+
+        if ($user) {
+            $user->api_token = null;
+            $user->save();
+        }
+
+        return response()->json(['message' => 'You have been logged out.']);
     }
 
 }

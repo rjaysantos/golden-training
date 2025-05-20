@@ -35,8 +35,9 @@
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
+            const userData = localStorage.getItem('name', 'username');
 
-            fetch('/apiLogin', {
+            fetch('/api/apiLogin', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -47,21 +48,24 @@
                 .then(async res => {
                     const data = await res.json();
 
-                    if (!res.ok && !data.user) {
+                    if (!res.ok || !data.user || !data.api_token) {
                         swal("Error!", data.message || "Invalid credentials", "error");
-                    } else {
-                        localStorage.setItem('username', data.user.username);
-                        localStorage.setItem('name', data.user.name);
-
-                        swal("Success!", data.message || "Login successful", "success")
-                            .then(() => window.location.href = '/dashboard');
+                        return;
                     }
+
+                    localStorage.setItem('api_token', data.api_token);
+                    localStorage.setItem('username', data.user.username);
+                    localStorage.setItem('name', data.user.name);
+
+                    swal("Success!", data.message || "Login successful", "success")
+                        .then(() => window.location.href = '/dashboard');
                 })
                 .catch(() => {
                     swal("Error!", "Something went wrong", "error");
                 });
         });
     </script>
+
 
 </body>
 

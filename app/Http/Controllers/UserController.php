@@ -24,7 +24,7 @@ class UserController extends Controller
         if ($userData) {
             return response()->json([
                 'message' => 'Username already taken'
-            ], 409); //conflict status code 
+            ], 409);
         }
 
         $user = $this->repository->createUser($request->name, $request->username, $request->password);
@@ -32,9 +32,8 @@ class UserController extends Controller
         return response()->json([
             'message' => 'User Registered Successfully',
             'user' => [
-                'id' => $user->id,
                 'name' => $user->name,
-                'username' => $user->username,
+                'username' => $user->username
             ]
         ], 201);
     }
@@ -48,13 +47,17 @@ class UserController extends Controller
 
         $user = $this->repository->getUserByUsernamePassword($request->username, $request->password);
 
-        if ($user) {
-            $api_token = Str::random(64);
-
-            $user->api_token = $api_token;
-            $user->save();
+        if (!$user) {
 
             return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        $api_token = $this->repository->assignApiTokenToUser($user->id);
+
+        return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
                 'api_token' => $api_token,
@@ -64,12 +67,6 @@ class UserController extends Controller
                     'username' => $user->username
                 ]
             ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid credentials'
-        ], 401);
     }
 
     public function apiGetAuthenticatedUser(Request $request) 
@@ -126,8 +123,7 @@ class UserController extends Controller
         }
 
         if (!empty($updateData)) {
-            $this->repository->updateUser($user, $updateData);
-            $this->repository->refreshUserById($user->id); //use direct db refresh method
+            $this->repository->updateUser($user->id, $updateData);
         }
 
         return response()->json([
@@ -157,7 +153,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        $this->repository->deleteUser($user);
+        $this->repository->deleteUser($user->id);
 
         return response()->json([
             'success' => true,
@@ -171,8 +167,7 @@ class UserController extends Controller
         $user = $this->repository->authenticateToken($api_token);
 
         if ($user) {
-            $this->repository->clearApiToken($user);
-            $this->repository->saveUserData($user);
+            $this->repository->clearApiToken($user->id);
         }
 
         return response()->json(['message' => 'You have been logged out.']);

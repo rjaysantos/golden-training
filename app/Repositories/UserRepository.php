@@ -3,80 +3,98 @@ namespace App\Repositories;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class UserRepository //Repository is only for DB queries
 {
     public function getUserByUsername(string $username): ?object
     {
-        return User::where('username', $username)
+        return DB::table('users')
+            ->where('username', $username)
             ->first();
     }
 
     public function getUserByUsernamePassword(string $username, string $password): ?object
     {
-        return User::where('username', $username)
+        return DB::table('users')
+            ->where('username', $username)
             ->where('password', md5($password))
             ->first();
     }
 
     public function getUserByName(string $name): ?object
     {
-        return User::where('name', $name);
+        return DB::table('users')
+            ->where('name', $name);
     }
 
     public function getUserById(int $id): ?User
     {
-        return User::find($id);
+        return DB::table('users')
+            ->find($id);
     }
     
     public function createUser(string $name, string $username, string $password): ?object
     {
-        return User::create([
-            'name' => $name,
-            'username' => $username,
-            'password' => md5($password),
-        ]);
+        $inserted = DB::table('users')
+            ->insert([
+                'name' => $name,
+                'username' => $username,
+                'password' => md5($password)
+            ]);
+            
+            return (object) [
+                'id' => $inserted,
+                'name' => $name,
+                'username' => $username
+            ];
     }
 
     public function authenticateToken (string $api_token) 
     {
-        return User::where('api_token', $api_token)
+        return DB::table('users')
+            ->where('api_token', $api_token)
             ->first();
     }
 
-    public function updateUser(User $user, array $data): bool
+    public function updateUser(int $userId, array $data): bool
     {
         return DB::table('users')
-            ->where('id', $user->id)
+            ->where('id', $userId)
             ->update($data) > 0;
     }
 
-    public function deleteUser(User $user): bool
+    public function deleteUser(int $id): bool
     {
         return DB::table('users')
-            ->where('id', $user->id)
+            ->where('id', $id)
             ->delete() > 0;
     }
 
-    public function saveUserData(User $user): bool
+    public function saveUserData(string $api_token): bool 
     {
-        if ($user->id) {
+        if ($user->api_token) {
             return DB::table('users')
-                ->where('id', $user->id)
-                ->update($user->getAttributes()) > 0;
+                ->where('api_token)', $user->api_token)
+                ->update($user->data) > 0;
         }
     }
 
-    public function clearApiToken(User $user): bool
+    public function clearApiToken(int $id): bool
     {
         return DB::table('users')
-            ->where('id', $user->id)
+            ->where('id', $id)
             ->update(['api_token' => null]) > 0;
     }
 
-    public function refreshUserById(int $id): ?User
+    public function assignApiTokenToUser(int $id): string
     {
-        $data = DB::table('users')->where('id', $id)->first();
-        return $data ? new User((array) $data) : null;
+        $api_token = Str::random(64);
+        
+        DB::table('users')
+            ->where('id', $id)
+            ->update(['api_token' => $api_token]);
+            
+        return $api_token;
     }
 }

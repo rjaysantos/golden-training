@@ -31,6 +31,7 @@ Route::get('/test-example', function () {
 });
 
 Route::get('/test-1', function () {
+    //test
     $output = ['test1'];
 
     return response()->json($output);

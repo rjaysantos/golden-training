@@ -84,7 +84,48 @@ Route::get('/test-2', function () {
 });
 
 Route::get('/test-3', function () {
-    $output = ['test3'];
+    $num = 1;
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+        $rowTotal = '5';
+
+        if ($ctrRow < 3) {
+            for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+                if ($ctrRow % 2 == 0)
+                    $rowData .= "{$num} ";
+                else
+                    $rowData .= "{$num} ";
+
+                if ($rowTotal > 3)
+                    $num++;
+                else
+                    $num--;
+
+                $rowTotal--;
+            }
+            $num += 2;
+        } else {
+            $num -= 2;
+            for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+                if ($ctrRow % 2 == 0)
+                    $rowData .= "{$num} ";
+                else
+                    $rowData .= "{$num} ";
+
+                if ($rowTotal > 3)
+                    $num++;
+                else
+                    $num--;
+
+                $rowTotal--;
+            }
+            $num += 2;
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });

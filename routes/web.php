@@ -32,12 +32,25 @@ Route::get('/test-example', function () {
 
 Route::get('/test-1', function () {
     $output = ['test1'];
+    
 
     return response()->json($output);
 });
 
 Route::get('/test-2', function () {
-    $output = ['test2'];
+    $output = [];
+
+    for ($i = 0; $i < 5; $i++) {
+        $rowData = '';
+        for ($j = 0; $j < 5; $j++) {
+            if (($i + $j) % 2 == 0) 
+                $rowData .= ' +';
+            else 
+                $rowData .= ' -';
+        }
+
+        $output[] = trim($rowData);
+    }
 
     return response()->json($output);
 });

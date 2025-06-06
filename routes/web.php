@@ -31,19 +31,66 @@ Route::get('/test-example', function () {
 });
 
 Route::get('/test-1', function () {
-    $output = ['test1'];
+    
+    $counter = 1;
+    $output = [];
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+        $rowData = ' ';
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+            $rowData = $rowData . $counter++ . ' ';
+        }
+
+        $output[] = trim($rowData);
+    }
 
     return response()->json($output);
 });
 
 Route::get('/test-2', function () {
-    $output = ['test2'];
+
+    $plus = '+';
+    $minus = '-';
+    $output = [];
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+        $rowData = '';
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+
+            if (($ctrRow + $ctrCol) % 2 == 0) {
+                $symbol = $plus;
+            } else {
+                $symbol = $minus;
+            }
+            $rowData = $rowData . $symbol . ' ';
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });
 
 Route::get('/test-3', function () {
-    $output = ['test3'];
 
+    $output = [];
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+        $rowData = ' ';
+
+        $value = $ctrRow <= 2 ? $ctrRow : 4 - $ctrRow;
+        $base = $value + 1;
+
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+            $offset = 2 - abs(2 - $ctrCol);
+            $number = $base + $offset;
+            $rowData = $rowData . $number . ' ';
+        }
+
+        $output[] = trim($rowData);
+    }
+    // dd($output);
     return response()->json($output);
 });

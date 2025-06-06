@@ -48,7 +48,27 @@ Route::get('/test-1', function () {
 });
 
 Route::get('/test-2', function () {
-    $output = ['test2'];
+
+    $plus = '+';
+    $minus = '-';
+    $output = [];
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+        $rowData = '';
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+
+            if (($ctrRow + $ctrCol) % 2 == 0) {
+                $symbol = $plus;
+            } else {
+                $symbol = $minus;
+            }
+            $rowData = $rowData . $symbol . ' ';
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });

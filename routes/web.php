@@ -31,8 +31,18 @@ Route::get('/test-example', function () {
 });
 
 Route::get('/test-1', function () {
-    //test
-    $output = ['test1'];
+    
+    $counter = 1;
+    $output = [];
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+        $rowData = ' ';
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+            $rowData = $rowData . $counter++ . ' ';
+        }
+
+        $output[] = trim($rowData);
+    }
 
     return response()->json($output);
 });

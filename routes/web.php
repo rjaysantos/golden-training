@@ -31,19 +31,88 @@ Route::get('/test-example', function () {
 });
 
 Route::get('/test-1', function () {
-    $output = ['test1'];
+    $output = [];
+    $rowData = '';
+    $counter = 0;
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+
+        for ($ctrCol = 1; $ctrCol <= 5; $ctrCol++) {
+            $counter++;
+            if ($ctrCol % 6 === 0)
+                $rowData .= "\n";
+            else
+                $rowData .= "{$counter} ";
+        }
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });
 
 Route::get('/test-2', function () {
-    $output = ['test2'];
+    $plus = '+';
+    $minus = '-';
+    $output = [];
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+
+            if ($ctrRow % 2 == 0)
+                if ($ctrCol % 2 == 0)
+                    $rowData .= "{$plus} ";
+                else
+                    $rowData .= "{$minus} ";
+            else
+            if ($ctrCol % 2 == 0)
+                    $rowData .= "{$minus} ";
+                else
+                    $rowData .= "{$plus} ";
+                
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });
 
 Route::get('/test-3', function () {
-    $output = ['test3'];
+    $output = [];
+    $rowData = '';
+    $counterCol = 0;
+    $counterRow = -1;
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) { 
+        if ($ctrRow < 3){
+            $counterRow++;
+        }else{
+            $counterRow--;
+        }
+
+        $counterCol = $counterRow;
+        for ($ctrCol = 1; $ctrCol <= 5; $ctrCol++) {
+
+            if ($ctrCol % 6 === 0)
+                $rowData .= '\n';
+            else{
+                if ($ctrCol <= 3){
+                    $counterCol++;
+                    $rowData .= "{$counterCol} ";
+                }else{
+                    $counterCol--;
+                    $rowData .= "{$counterCol} ";
+                }
+            }
+        }
+        $output[] = trim($rowData);
+        $rowData = '';
+        $counterCol = 0;
+    }
 
     return response()->json($output);
 });

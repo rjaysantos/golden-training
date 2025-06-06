@@ -34,7 +34,13 @@ class ActivityTest extends TestCase
     {
         $response = $this->get('/test-2');
 
-        $response->assertJson([]);
+        $response->assertJson([
+            '+ - + - +',
+            '- + - + -',
+            '+ - + - +',
+            '- + - + -',
+            '+ - + - +',
+        ]);
     }
 
     public function test_test3()

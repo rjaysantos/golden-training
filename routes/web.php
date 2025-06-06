@@ -52,7 +52,31 @@ Route::get('/test-1', function () {
 });
 
 Route::get('/test-2', function () {
-    $output = ['test2'];
+    $plus = '+';
+    $minus = '-';
+    $output = [];
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+
+            if ($ctrRow % 2 == 0)
+                if ($ctrCol % 2 == 0)
+                    $rowData .= "{$plus} ";
+                else
+                    $rowData .= "{$minus} ";
+            else
+            if ($ctrCol % 2 == 0)
+                    $rowData .= "{$minus} ";
+                else
+                    $rowData .= "{$plus} ";
+                
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });

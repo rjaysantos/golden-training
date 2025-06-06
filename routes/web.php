@@ -31,19 +31,69 @@ Route::get('/test-example', function () {
 });
 
 Route::get('/test-1', function () {
-    $output = ['test1'];
+    $number = 1;
+    $rowData = '';
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+            $rowData .= "{$number} ";
+            $number++;
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });
 
 Route::get('/test-2', function () {
-    $output = ['test2'];
+    $sign = '+';
+    $output = [];
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+
+            $rowData .= "{$sign} ";
+            if ($sign == '+')
+                $sign = '-';
+            else
+                $sign = '+';
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });
 
 Route::get('/test-3', function () {
-    $output = ['test3'];
+    $number = 1;
+    $output = [];
+    $rowData = '';
+
+    for ($ctrRow = 0; $ctrRow < 5; $ctrRow++) {
+
+        for ($ctrCol = 0; $ctrCol < 5; $ctrCol++) {
+            $rowData .= "{$number} ";
+
+            if ($ctrCol > 1)
+                $number--;
+            else
+                $number++;
+        }
+
+        $number += 2;
+        if ($ctrRow > 1) {
+            $number -= 2;
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });

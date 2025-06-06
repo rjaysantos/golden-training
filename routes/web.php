@@ -31,7 +31,27 @@ Route::get('/test-example', function () {
 });
 
 Route::get('/test-1', function () {
-    $output = ['test1'];
+    // $output = [
+    //     '1 2 3 4 5',
+    //     '6 7 8 9 10',
+    //     '11 12 13 14 15',
+    //     '16 17 18 19 20',
+    //     '21 22 23 24 25',
+    // ];
+
+    $count = 1;
+    $output = [];
+    $rowData = '';
+
+    for ($column = 0; $column < 5; $column++) {
+        for ($row = 0; $row < 5; $row++) {
+            $rowData .= "{$count} ";
+            $count++;
+        }
+
+        $output[] = trim($rowData);
+        $rowData = '';
+    }
 
     return response()->json($output);
 });

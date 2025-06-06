@@ -17,6 +17,8 @@ class ActivityTest extends TestCase
         ]);
     }
 
+    // Activity
+
     public function test_test1()
     {
         $response = $this->get('/test-1');
